@@ -47,18 +47,19 @@ yarn-error.log*
 next-env.d.ts
 
 # Claude Desktop - ignore personal config, commit project workflow
-/.claude/config.json           # Personal API keys, tokens
-/.claude/settings.json         # User-specific settings
-/.claude/**/secrets.json       # Any secrets files
-/.claude/**/*.key              # Key files
-/.claude/**/.env*              # Environment files in .claude
+.claude/config.json           # Personal API keys, tokens
+.claude/**/secrets.json       # Any secrets files
+.claude/**/*.key              # Key files
+.claude/**/.env*              # Environment files in .claude
+.claude/settings.local.json    # personal overrides, if you ever create one
+.claude/.credentials.json
 
 # Allow project-specific Claude workflow (portfolio value)
-!/.claude/hooks/               # Custom hooks
-!/.claude/agents/              # Agent definitions
-!/.claude/prompts/             # Custom prompts
-!/.claude/mcp-servers/         # MCP server configs (if sanitized)
-!/.claude/README.md            # Documentation
+!.claude/hooks/               # Custom hooks
+!.claude/agents/              # Agent definitions
+!.claude/prompts/             # Custom prompts
+!.claude/mcp-servers/         # MCP server configs (if sanitized)
+!.claude/README.md            # Documentation
 
 # Prisma
 prisma/*.db-journal
