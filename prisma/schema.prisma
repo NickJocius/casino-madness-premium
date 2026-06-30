@@ -99,8 +99,8 @@ model GameSession {
   user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   gameType     GameType
   bet          Int           // integer cents wagered this round
-  outcome      String        @db.VarChar(64) // game-specific vocabulary; not a shared enum
-  payout       Int           // integer cents credited (per payout.ts total-credit convention)
+  outcome      String?       @db.VarChar(64) // null until resolved; game-specific vocabulary
+  payout       Int?          // null until resolved; integer cents (total-credit convention)
   snapshot     Json?         // nullable; final hand/game state for history/replay
   createdAt    DateTime      @default(now())
   transactions Transaction[]

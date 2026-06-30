@@ -71,8 +71,8 @@ CREATE TABLE `game_sessions` (
     `userId` VARCHAR(191) NOT NULL,
     `gameType` ENUM('BLACKJACK', 'POKER', 'SLOTS', 'ROULETTE') NOT NULL,
     `bet` INTEGER NOT NULL,
-    `outcome` VARCHAR(64) NOT NULL,
-    `payout` INTEGER NOT NULL,
+    `outcome` VARCHAR(64) NULL,
+    `payout` INTEGER NULL,
     `snapshot` JSON NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
