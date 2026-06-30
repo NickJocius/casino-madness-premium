@@ -211,29 +211,35 @@ casino-madness-premium/
 ├── CLAUDE.md                            # Project conventions
 └── package.json
 
-Key Architectural Decisions
-✅ Feature-First Organization
-Each game is self-contained under features/games/{game}/
-Easy to add new games without touching existing code
-Clear ownership and boundaries
-✅ Server-Authoritative
-Client sends intents (bet, hit, fold)
-Server computes results (outcome, payout, new state)
-Client renders server-computed state
-✅ Pure Game Engines
-engine/ contains pure functions (no I/O, no side effects)
-100% testable with simple unit tests
-Portable to other platforms (mobile, backend)
-✅ Co-located Tests
-Tests live next to the code they test
-*.test.ts for unit tests
-Easy to run vitest {game}/ for specific game
-✅ Validation at Every Boundary
-Server Actions: Zod schemas
-Env vars: lib/env.ts (zod)
-API responses: Parse with zod in TanStack Query
-Machine context: TypeScript types
-✅ Scalable Context Usage
-Only for truly global UI state (sound, theme)
-If performance issues arise, swap to @xstate/store
-Never use Context for game logic (XState) or server state (TanStack)
+## Key Architectural Decisions
+
+### Feature-First Organization
+- Each game is self-contained under features/games/{game}/
+- Easy to add new games without touching existing code
+- Clear ownership and boundaries
+
+### Server-Authoritative
+- Client sends intents (bet, hit, fold)
+- Server computes results (outcome, payout, new state)
+- Client renders server-computed state
+
+### Pure Game Engines
+- engine/ contains pure functions (no I/O, no side effects)
+- 100% testable with simple unit tests
+- Portable to other platforms (mobile, backend)
+
+### Co-located Tests
+- Tests live next to the code they test
+- *.test.ts for unit tests
+- Easy to run vitest {game}/ for specific game
+
+### Validation at Every Boundary
+- Server Actions: Zod schemas
+- Env vars: lib/env.ts (zod)
+- API responses: Parse with zod in TanStack Query
+- Machine context: TypeScript types
+
+### Scalable Context Usage
+- Only for truly global UI state (sound, theme)
+- If performance issues arise, swap to @xstate/store
+- Never use Context for game logic (XState) or server state (TanStack)
