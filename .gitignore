@@ -31,7 +31,13 @@ yarn-error.log*
 .pnpm-debug.log*
 
 # env files (can opt-in for committing if needed)
-.env*
+.env
+.env.local
+.env*.local
+.env.development.local
+.env.test.local
+.env.production.local
+!.env.example
 
 # vercel
 .vercel
@@ -40,5 +46,44 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-CLAUDE.md
-AGENTS.md
+# Claude Desktop - ignore personal config, commit project workflow
+/.claude/config.json           # Personal API keys, tokens
+/.claude/settings.json         # User-specific settings
+/.claude/**/secrets.json       # Any secrets files
+/.claude/**/*.key              # Key files
+/.claude/**/.env*              # Environment files in .claude
+
+# Allow project-specific Claude workflow (portfolio value)
+!/.claude/hooks/               # Custom hooks
+!/.claude/agents/              # Agent definitions
+!/.claude/prompts/             # Custom prompts
+!/.claude/mcp-servers/         # MCP server configs (if sanitized)
+!/.claude/README.md            # Documentation
+
+# Prisma
+prisma/*.db-journal
+prisma/*.db
+/generated/prisma
+
+# Better Auth (if using file-based secrets)
+auth-secret.txt
+.auth-secret
+
+# Logs that might contain sensitive data
+*.log
+logs/
+
+# IDE config that might contain paths/secrets
+.vscode/settings.json
+.idea/
+*.swp
+*.swo
+
+# Windows
+Thumbs.db
+Desktop.ini
+
+# Backup files
+*.backup
+*.bak
+*.tmp
