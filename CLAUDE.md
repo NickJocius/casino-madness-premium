@@ -91,3 +91,12 @@ git commit · git push · npm install/uninstall · gh pr create · file deletion
 
 ### Build order (do not violate)
 - Build a PLAYABLE core loop first: XState game machine + seeded deck + dinero money. Auth, animation, and model-based testing are layered on AFTER the loop runs. Do not install or wire libraries a feature doesn't yet need.
+
+## Ledger — Transaction is the source of truth, Profile.bank is a cache
+- `Transaction` is the authoritative, append-only financial ledger. `Profile.bank` is a denormalized cache for fast reads ONLY — it is never the source of truth and can always be recomputed from `SUM(transactions.amount)` for that user.
+- `Transaction.amount` is SIGNED integer cents: BET rows are negative, PAYOUT rows are positive. This means `balanceAfter = balanceBefore + amount` holds uniformly for every row regardless of type — never branch on `type` to decide the sign in code; the sign already lives in the stored value.
+- Any code that changes a user's balance MUST, in a single `prisma.$transaction([...])` call:
+  1. INSERT a `Transaction` row with the correct signed `amount` and the resulting `balanceAfter`.
+  2. UPDATE `Profile.bank` to match that same `balanceAfter`.
+- NEVER update `Profile.bank` alone, outside a `$transaction` paired with a `Transaction` insert. A balance change with no corresponding ledger row is a review BLOCKER — it breaks auditability and means the cache can silently drift from the truth with no way to detect or recompute it.
+- If `Profile.bank` and `SUM(transactions.amount)` ever disagree in practice, `Profile.bank` is wrong; recompute and correct it from the `Transaction` table, never the other way around.

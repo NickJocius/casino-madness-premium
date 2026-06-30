@@ -12,3 +12,127 @@ datasource db {
   provider = "mysql"
 }
 
+model User {
+  id            String    @id
+  name          String    @db.Text
+  email         String
+  emailVerified Boolean   @default(false)
+  image         String?   @db.Text
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  sessions      Session[]
+  accounts      Account[]
+  profile       Profile?
+  gameSessions  GameSession[]
+  transactions  Transaction[]
+
+  @@unique([email])
+  @@map("user")
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?  @db.Text
+  userAgent String?  @db.Text
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([token])
+  @@index([userId(length: 191)])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id
+  accountId             String    @db.Text
+  providerId            String    @db.Text
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?   @db.Text
+  refreshToken          String?   @db.Text
+  idToken               String?   @db.Text
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?   @db.Text
+  password              String?   @db.Text
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId(length: 191)])
+  @@map("account")
+}
+
+model Profile {
+  id        String    @id @default(cuid())
+  userId    String    @unique
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  city      String?   @db.VarChar(255)
+  state     String?   @db.VarChar(255)
+  bio       String?   @db.Text
+  bank      Int       @default(1000000)
+  level     Int       @default(1)
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+  @@map("profiles")
+}
+
+enum GameType {
+  BLACKJACK
+  POKER
+  SLOTS
+  ROULETTE
+}
+
+enum TransactionType {
+  BET
+  PAYOUT
+}
+
+model GameSession {
+  id           String        @id @default(cuid())
+  userId       String
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  gameType     GameType
+  bet          Int           // integer cents wagered this round
+  outcome      String        @db.VarChar(64) // game-specific vocabulary; not a shared enum
+  payout       Int           // integer cents credited (per payout.ts total-credit convention)
+  snapshot     Json?         // nullable; final hand/game state for history/replay
+  createdAt    DateTime      @default(now())
+  transactions Transaction[]
+
+  @@index([userId(length: 191), createdAt])
+  @@map("game_sessions")
+}
+
+model Transaction {
+  id            String          @id @default(cuid())
+  userId        String
+  user          User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  gameSessionId String?
+  gameSession   GameSession?    @relation(fields: [gameSessionId], references: [id], onDelete: SetNull)
+  type          TransactionType
+  amount        Int             // SIGNED integer cents: negative for BET, positive for PAYOUT
+  balanceAfter  Int             // denormalized running balance after this transaction (integer cents)
+  createdAt     DateTime        @default(now())
+
+  @@index([userId(length: 191), createdAt])
+  @@index([gameSessionId(length: 191)])
+  @@map("transactions")
+}
+
+model Verification {
+  id         String   @id
+  identifier String   @db.Text
+  value      String   @db.Text
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier(length: 191)])
+  @@map("verification")
+}
