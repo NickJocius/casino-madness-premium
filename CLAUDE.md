@@ -1,4 +1,5 @@
 @AGENTS.md
+@DESIGN.md
 
 # Project — Next.js / TypeScript (single repo, npm)
 
