@@ -10,6 +10,8 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-display: var(--font-bangers);
+  --font-slab: var(--font-roboto-slab);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -23,4 +25,30 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+.glow-text-red {
+  text-shadow: 0 0 7px #fe1323, 0 0 42px #fff, 0 0 82px #fff, 0 0 92px #fff;
+}
+
+.glow-button {
+  border: 0.2rem solid #fff;
+  border-radius: 2rem;
+  color: #fff;
+  text-shadow:
+    0 0 7px var(--glow-accent),
+    0 0 10px var(--glow-accent),
+    0 0 21px var(--glow-accent),
+    0 0 42px #fff,
+    0 0 82px #fff,
+    0 0 92px #fff,
+    0 0 102px #fff,
+    0 0 151px #fff;
+  box-shadow:
+    0 0 0.2rem #fff,
+    0 0 0.2rem #fff,
+    0 0 1.2rem var(--glow-accent),
+    0 0 0.8rem var(--glow-accent),
+    0 0 2rem var(--glow-accent),
+    inset 0 0 1.3rem var(--glow-accent);
 }
