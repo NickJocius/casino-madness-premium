@@ -224,3 +224,25 @@ be recreated even in spirit (e.g. a Heath Ledger Joker likeness) — pick origin
    per game (red for blackjack-style, green traditional, etc.)
 9. `TopNav` — sticky nav shell with mobile hamburger toggle
 10. `Paytable` — dark translucent odds table for poker/slots payout reference
+
+## Available image assets (copied from legacy app, check license before production use)
+
+- `/images/casino-header.png` — the full-width dashboard header banner (Las Vegas skyline + Casino Madness logo treatment). Available for use in the dashboard layout header. Dimensions: approximately 900×200px. Note: contains original app branding.
+
+## Logo / Brand Treatment (from Casino.png header image)
+
+The canonical logo treatment splits "Casino Madness" across two typographic layers:
+
+- **"CASINO"** — large, bold, all-caps, white, neon-white glow (not red). Feels like a lit marquee sign. Font: Bangers or equivalent heavy display.
+- **"Madness"** — below and slightly overlapping "CASINO", red cursive/script style, slightly smaller but still large. Neon red glow (#FE1323). Feels handwritten/energetic. Font: Pacifico or similar casino-script.
+
+The two words together form one visual unit — "Casino" is the straight-man, "Madness" is the chaos. They should never appear in the same font or the same color.
+
+Background context in the original: a dark Las Vegas skyline photo with a dark overlay.
+
+This two-tier treatment should be used:
+- On the login page logo
+- On the main dashboard/lobby header
+- Anywhere the full brand name appears as a hero element
+
+For smaller contexts (nav, tab title, etc.) use "Casino Madness" in Bangers only, white, no split treatment.
