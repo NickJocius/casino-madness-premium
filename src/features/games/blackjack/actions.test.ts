@@ -35,7 +35,7 @@ vi.mock('@/lib/auth', () => ({
 
 vi.mock('@/lib/prisma', () => ({
   prisma: {
-    profile: { findUnique: vi.fn() },
+    profile: { findFirst: vi.fn() },
     $transaction: vi.fn(),
   },
 }));
@@ -74,7 +74,7 @@ import type { BjCookiePayload } from './session';
 // ---------------------------------------------------------------------------
 
 interface MockedPrisma {
-  profile: { findUnique: ReturnType<typeof vi.fn> };
+  profile: { findFirst: ReturnType<typeof vi.fn> };
   $transaction: ReturnType<typeof vi.fn>;
 }
 
@@ -221,7 +221,7 @@ describe('playerAction — validation', () => {
 describe('startGame — insufficient funds', () => {
   it('returns INSUFFICIENT_FUNDS and performs no DB writes when bet exceeds bank', async () => {
     mockedAuth.api.getSession.mockResolvedValue(makeAuthSession());
-    mockedPrisma.profile.findUnique.mockResolvedValue(makeProfile({ bank: 500 }));
+    mockedPrisma.profile.findFirst.mockResolvedValue(makeProfile({ bank: 500 }));
 
     const result = await startGame(1000);
 
@@ -240,7 +240,7 @@ describe('startGame — insufficient funds', () => {
 describe('startGame — hole card concealment', () => {
   it('returns dealerVisibleCard (single card) and no dealerHand key when the round is still in progress', async () => {
     mockedAuth.api.getSession.mockResolvedValue(makeAuthSession());
-    mockedPrisma.profile.findUnique.mockResolvedValue(makeProfile({ bank: 100_000 }));
+    mockedPrisma.profile.findFirst.mockResolvedValue(makeProfile({ bank: 100_000 }));
     const tx = wireTransaction();
 
     // Seed chosen (verified out-of-band) to deal a non-natural opening hand,
@@ -287,11 +287,12 @@ describe('startGame — hole card concealment', () => {
 // ---------------------------------------------------------------------------
 
 describe('startGame — deleted profile', () => {
-  it('returns PROFILE_NOT_FOUND and performs no DB writes when profile.deletedAt is set', async () => {
+  it('returns PROFILE_NOT_FOUND and performs no DB writes when the profile is soft-deleted (excluded at the query level)', async () => {
     mockedAuth.api.getSession.mockResolvedValue(makeAuthSession());
-    mockedPrisma.profile.findUnique.mockResolvedValue(
-      makeProfile({ bank: 100_000, deletedAt: new Date('2026-06-01T00:00:00Z') }),
-    );
+    // The query now filters on deletedAt: null, so a soft-deleted profile
+    // simply never comes back from findFirst — it resolves null, exactly
+    // like "no profile at all".
+    mockedPrisma.profile.findFirst.mockResolvedValue(null);
 
     const result = await startGame(1000);
 
@@ -299,12 +300,15 @@ describe('startGame — deleted profile', () => {
     if (!result.ok) {
       expect(result.error.code).toBe('PROFILE_NOT_FOUND');
     }
+    expect(mockedPrisma.profile.findFirst).toHaveBeenCalledWith({
+      where: { userId: 'user_1', deletedAt: null },
+    });
     expect(mockedPrisma.$transaction).not.toHaveBeenCalled();
   });
 
   it('returns PROFILE_NOT_FOUND when no profile exists at all', async () => {
     mockedAuth.api.getSession.mockResolvedValue(makeAuthSession());
-    mockedPrisma.profile.findUnique.mockResolvedValue(null);
+    mockedPrisma.profile.findFirst.mockResolvedValue(null);
 
     const result = await startGame(1000);
 
@@ -330,7 +334,7 @@ describe('unauthenticated access', () => {
     if (!result.ok) {
       expect(result.error.code).toBe('UNAUTHENTICATED');
     }
-    expect(mockedPrisma.profile.findUnique).not.toHaveBeenCalled();
+    expect(mockedPrisma.profile.findFirst).not.toHaveBeenCalled();
   });
 
   it('playerAction returns UNAUTHENTICATED when there is no session', async () => {
@@ -583,6 +587,12 @@ describe('playerAction — concurrent balance update', () => {
       expect(result.error.code).toBe('CONCURRENT_UPDATE');
     }
 
+    // creditPayout now runs the guarded profile.updateMany BEFORE creating the
+    // PAYOUT transaction row, so a count:0 result genuinely prevents that
+    // insert within this callback invocation — this is no longer just
+    // relying on Prisma's transaction-abort rollback semantics.
+    expect(tx.transaction.create).not.toHaveBeenCalled();
+
     // Nothing past the throw inside the $transaction callback executes: no
     // cookie mutation happens (neither a re-signed in-progress cookie nor a
     // delete of the resolved-round cookie) — this is the only part of "the
@@ -629,7 +639,7 @@ describe('playerAction — cookie payload schema validation', () => {
 describe('startGame — immediate resolution (natural blackjack on deal)', () => {
   it('resolves in one round trip: BET + PAYOUT rows chained, profile.updateMany to the combined balance, and no cookie set', async () => {
     mockedAuth.api.getSession.mockResolvedValue(makeAuthSession());
-    mockedPrisma.profile.findUnique.mockResolvedValue(makeProfile({ bank: 100_000 }));
+    mockedPrisma.profile.findFirst.mockResolvedValue(makeProfile({ bank: 100_000 }));
     const tx = wireTransaction();
 
     // Seed found via brute-force search (see task notes) to deal the player

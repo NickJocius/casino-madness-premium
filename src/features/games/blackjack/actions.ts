@@ -63,6 +63,13 @@ async function creditPayout(
     finalBalance: number;
   },
 ): Promise<void> {
+  const updated = await tx.profile.updateMany({
+    where: { userId: params.userId, bank: params.expectedBank },
+    data: { bank: params.finalBalance },
+  });
+  if (updated.count === 0) {
+    throw new ConcurrentUpdateError();
+  }
   await tx.transaction.create({
     data: {
       userId: params.userId,
@@ -72,13 +79,6 @@ async function creditPayout(
       balanceAfter: params.finalBalance,
     },
   });
-  const updated = await tx.profile.updateMany({
-    where: { userId: params.userId, bank: params.expectedBank },
-    data: { bank: params.finalBalance },
-  });
-  if (updated.count === 0) {
-    throw new ConcurrentUpdateError();
-  }
 }
 
 export async function startGame(input: unknown): Promise<ActionResult<InProgressView | ResolvedView>> {
@@ -90,8 +90,8 @@ export async function startGame(input: unknown): Promise<ActionResult<InProgress
   const bet = parsed.data;
 
   const userId = authSession.user.id;
-  const profile = await prisma.profile.findUnique({ where: { userId } });
-  if (!profile || profile.deletedAt !== null) {
+  const profile = await prisma.profile.findFirst({ where: { userId, deletedAt: null } });
+  if (!profile) {
     return fail('PROFILE_NOT_FOUND', 'No active profile found for this account.');
   }
 
