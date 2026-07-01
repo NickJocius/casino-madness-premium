@@ -9,13 +9,7 @@ const eslintConfig = defineConfig([
   // Turn off ESLint formatting rules that conflict with Prettier (must come after the configs above).
   eslintConfigPrettier,
   // Override default ignores of eslint-config-next; add generated Prisma client.
-  globalIgnores([
-    ".next/**",
-    "out/**",
-    "build/**",
-    "next-env.d.ts",
-    "generated/**",
-  ]),
+  globalIgnores([".next/**", "out/**", "build/**", "next-env.d.ts", "generated/**"]),
 ]);
 
 export default eslintConfig;

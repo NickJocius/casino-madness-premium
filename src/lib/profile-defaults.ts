@@ -1,0 +1,2 @@
+export const DEFAULT_PROFILE_BANK = 1_000_000;
+export const DEFAULT_PROFILE_LEVEL = 1;

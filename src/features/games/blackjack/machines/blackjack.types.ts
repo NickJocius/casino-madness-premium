@@ -1,7 +1,7 @@
-import type { Rng } from '@/lib/game-core/rng';
-import type { Card } from '@/lib/game-core/types';
-import type { MoneyAmount } from '@/lib/game-core/money';
-import type { PayoutOutcome } from '@/features/games/blackjack/engine/payout';
+import type { Rng } from "@/lib/game-core/rng";
+import type { Card } from "@/lib/game-core/types";
+import type { MoneyAmount } from "@/lib/game-core/money";
+import type { PayoutOutcome } from "@/features/games/blackjack/engine/payout";
 
 export interface BlackjackContext {
   rng: Rng;
@@ -18,7 +18,7 @@ export interface BlackjackInput {
 }
 
 export type BlackjackEvent =
-  | { type: 'PLACE_BET'; amount: number /* integer cents — toMoney throws on floats */ }
-  | { type: 'DEAL' }
-  | { type: 'HIT' }
-  | { type: 'STAND' };
+  | { type: "PLACE_BET"; amount: number /* integer cents — toMoney throws on floats */ }
+  | { type: "DEAL" }
+  | { type: "HIT" }
+  | { type: "STAND" };

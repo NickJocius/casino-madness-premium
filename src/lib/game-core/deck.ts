@@ -1,6 +1,6 @@
-import { SUITS, RANKS } from './types';
-import type { Card } from './types';
-import type { Rng } from './rng';
+import { SUITS, RANKS } from "./types";
+import type { Card } from "./types";
+import type { Rng } from "./rng";
 
 export function makeDeck(): Card[] {
   const deck: Card[] = [];
