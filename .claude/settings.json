@@ -40,17 +40,13 @@
     "PreToolUse": [
       {
         "matcher": "Write|Edit|MultiEdit",
-        "hooks": [
-          { "type": "command", "command": "node .claude/hooks/protect-paths.mjs" }
-        ]
+        "hooks": [{ "type": "command", "command": "node .claude/hooks/protect-paths.mjs" }]
       }
     ],
     "PostToolUse": [
       {
         "matcher": "Write|Edit|MultiEdit",
-        "hooks": [
-          { "type": "command", "command": "node .claude/hooks/remind-review.mjs" }
-        ]
+        "hooks": [{ "type": "command", "command": "node .claude/hooks/remind-review.mjs" }]
       }
     ],
     "Stop": [

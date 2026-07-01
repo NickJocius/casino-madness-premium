@@ -1,13 +1,13 @@
-import { createActor, type Actor } from 'xstate';
-import { z } from 'zod';
-import { SUITS, RANKS, type Card } from '@/lib/game-core/types';
-import type { Rng } from '@/lib/game-core/rng';
-import { toMoney, toCents } from '@/lib/game-core/money';
-import { blackjackMachine } from '@/features/games/blackjack/machines/blackjack.machine';
-import type { BlackjackContext } from '@/features/games/blackjack/machines/blackjack.types';
-import type { PayoutOutcome } from '@/features/games/blackjack/engine/payout';
+import { createActor, type Actor } from "xstate";
+import { z } from "zod";
+import { SUITS, RANKS, type Card } from "@/lib/game-core/types";
+import type { Rng } from "@/lib/game-core/rng";
+import { toMoney, toCents } from "@/lib/game-core/money";
+import { blackjackMachine } from "@/features/games/blackjack/machines/blackjack.machine";
+import type { BlackjackContext } from "@/features/games/blackjack/machines/blackjack.types";
+import type { PayoutOutcome } from "@/features/games/blackjack/engine/payout";
 
-export const BJ_COOKIE_NAME = 'bj_session';
+export const BJ_COOKIE_NAME = "bj_session";
 export const BJ_COOKIE_MAX_AGE_SECONDS = 60 * 30;
 
 export interface SerializedBlackjackContext {
@@ -39,7 +39,7 @@ const cardSchema = z.object({
   rank: z.enum(RANKS),
 });
 
-const payoutOutcomeSchema = z.enum(['blackjack', 'win', 'push', 'loss', 'bust']);
+const payoutOutcomeSchema = z.enum(["blackjack", "win", "push", "loss", "bust"]);
 
 const serializedBlackjackSnapshotSchema = z.object({
   value: z.string(),
@@ -102,11 +102,11 @@ export function serializeSnapshot(actor: BlackjackActor): SerializedBlackjackSna
 // change to the machine added a new rng call site that rehydration doesn't
 // account for, and that must be treated as a bug, not papered over.
 const throwingRng: Rng = () => {
-  throw new Error('blackjack rng invoked after rehydration — see comment above');
+  throw new Error("blackjack rng invoked after rehydration — see comment above");
 };
 
 interface RestoredMachineSnapshot {
-  status: 'active';
+  status: "active";
   output: undefined;
   error: undefined;
   value: string;
@@ -123,11 +123,12 @@ export function rehydrateActor(serialized: SerializedBlackjackSnapshot): Blackja
     dealerHand: serialized.context.dealerHand,
     bet: toMoney(serialized.context.betCents),
     outcome: serialized.context.outcome,
-    payout: serialized.context.payoutCents !== null ? toMoney(serialized.context.payoutCents) : null,
+    payout:
+      serialized.context.payoutCents !== null ? toMoney(serialized.context.payoutCents) : null,
   };
 
   const restored: RestoredMachineSnapshot = {
-    status: 'active',
+    status: "active",
     output: undefined,
     error: undefined,
     value: serialized.value,
@@ -145,7 +146,10 @@ export function rehydrateActor(serialized: SerializedBlackjackSnapshot): Blackja
   return actor;
 }
 
-export function toInProgressView(snapshot: SerializedBlackjackSnapshot, balance: number): InProgressView {
+export function toInProgressView(
+  snapshot: SerializedBlackjackSnapshot,
+  balance: number,
+): InProgressView {
   return {
     playerHand: snapshot.context.playerHand,
     dealerVisibleCard: snapshot.context.dealerHand[0]!,
@@ -154,7 +158,10 @@ export function toInProgressView(snapshot: SerializedBlackjackSnapshot, balance:
   };
 }
 
-export function toResolvedView(snapshot: SerializedBlackjackSnapshot, newBalance: number): ResolvedView {
+export function toResolvedView(
+  snapshot: SerializedBlackjackSnapshot,
+  newBalance: number,
+): ResolvedView {
   return {
     playerHand: snapshot.context.playerHand,
     dealerHand: snapshot.context.dealerHand,

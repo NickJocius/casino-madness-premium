@@ -12,11 +12,11 @@ import {
   lessThan as dineroLt,
   isZero as dineroIsZero,
   isNegative as dineroIsNegative,
-} from 'dinero.js';
-import type { Dinero } from 'dinero.js';
-import { USD } from 'dinero.js/currencies';
+} from "dinero.js";
+import type { Dinero } from "dinero.js";
+import { USD } from "dinero.js/currencies";
 
-export type MoneyAmount = Dinero<number, 'USD'>;
+export type MoneyAmount = Dinero<number, "USD">;
 
 export function toMoney(cents: number): MoneyAmount {
   if (!Number.isInteger(cents)) {
@@ -31,12 +31,12 @@ export function toCents(money: MoneyAmount): number {
 
 export function toDisplayString(money: MoneyAmount): string {
   return toDecimal(money, ({ value, currency }) =>
-    new Intl.NumberFormat('en-US', {
-      style: 'currency',
+    new Intl.NumberFormat("en-US", {
+      style: "currency",
       currency: currency.code,
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
-    }).format(Number(value))
+    }).format(Number(value)),
   );
 }
 

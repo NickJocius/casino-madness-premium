@@ -31,15 +31,25 @@ body {
 }
 
 .glow-text-red {
-  text-shadow: 0 0 7px #fe1323, 0 0 42px #fff, 0 0 82px #fff, 0 0 92px #fff;
+  text-shadow:
+    0 0 7px #fe1323,
+    0 0 42px #fff,
+    0 0 82px #fff,
+    0 0 92px #fff;
 }
 
 .glow-text-white {
-  text-shadow: 0 0 10px #fff, 0 0 40px #fff, 0 0 80px #fff;
+  text-shadow:
+    0 0 10px #fff,
+    0 0 40px #fff,
+    0 0 80px #fff;
 }
 
 .glow-text-script {
-  text-shadow: 0 0 7px #fe1323, 0 0 21px #fe1323, 0 0 42px #fe1323;
+  text-shadow:
+    0 0 7px #fe1323,
+    0 0 21px #fe1323,
+    0 0 42px #fe1323;
 }
 
 .glow-container {

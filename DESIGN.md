@@ -2,7 +2,7 @@
 
 Source: `C:\Users\capac\Documents\casino-madness-nextjs` (Next.js 13 Pages/App Router hybrid,
 Tailwind 3, CSS Modules, Redux Toolkit, Framer Motion, react-parallax-tilt). Read-only extraction —
-nothing here was copied verbatim into code; this is a spec for rebuilding the *look* on the new stack.
+nothing here was copied verbatim into code; this is a spec for rebuilding the _look_ on the new stack.
 
 Concept: "Casino Madness" — a comic-book / DC-villain-themed play-money casino. Each game is skinned
 as a villain vs. hero matchup: **Poker = Harley Quinn & Joker**, **Blackjack = Superman & Lex Luthor**,
@@ -13,27 +13,27 @@ the new build wants a visual identity beyond generic felt-green.
 > DC Comics IP. Per this project's own rule ("no real-casino branding or IP," CC0-preferred assets),
 > the specific DC characters/names/likenesses **cannot** be reused in the new build and must be
 > replaced with an original or generic villain/hero theme (e.g. a made-up rogues' gallery, or a
-> different genre entirely) that preserves the *structure* of the concept — a comic-book
+> different genre entirely) that preserves the _structure_ of the concept — a comic-book
 > good-vs-evil mascot per game — without infringing on existing IP. Everything else in this doc
 > (palette, type, effects, component patterns) is original CSS/layout work and carries forward
 > independent of the character theme.
 
 ## Color palette
 
-| Token | Value | Usage |
-|---|---|---|
-| `red-blood` | `rgb(219, 11, 21)` / `#DB0B15` | Primary accent — buttons, borders, hover states, gradients |
-| `red-bloodTrans` | `rgba(219, 11, 21, 0.5)` | Ribbon badges, translucent overlays |
-| Neon red glow | `#FE1323` | Text-shadow / box-shadow glow color (buttons, headers) |
-| Neon blue glow | `#194FFF` | Alt glow color used only on the slots "Spin" button |
-| `gTitle` (title grey) | `rgb(230, 230, 230)` | Game title text color, sits on comic-bg headers |
-| `azure` | `#F0FFFF` | Hero heading text, light-on-black accents |
-| Base background | `#000000` (black) | Body background, nav background, card backs |
-| Cyan divider | `#00FFFF` (`#0ff`) | Slot reel divider borders |
-| Poker felt | deep green table image (`poker-table-green.png`) | Poker table background |
+| Token                    | Value                                                                                                                                                                      | Usage                                                       |
+| ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| `red-blood`              | `rgb(219, 11, 21)` / `#DB0B15`                                                                                                                                             | Primary accent — buttons, borders, hover states, gradients  |
+| `red-bloodTrans`         | `rgba(219, 11, 21, 0.5)`                                                                                                                                                   | Ribbon badges, translucent overlays                         |
+| Neon red glow            | `#FE1323`                                                                                                                                                                  | Text-shadow / box-shadow glow color (buttons, headers)      |
+| Neon blue glow           | `#194FFF`                                                                                                                                                                  | Alt glow color used only on the slots "Spin" button         |
+| `gTitle` (title grey)    | `rgb(230, 230, 230)`                                                                                                                                                       | Game title text color, sits on comic-bg headers             |
+| `azure`                  | `#F0FFFF`                                                                                                                                                                  | Hero heading text, light-on-black accents                   |
+| Base background          | `#000000` (black)                                                                                                                                                          | Body background, nav background, card backs                 |
+| Cyan divider             | `#00FFFF` (`#0ff`)                                                                                                                                                         | Slot reel divider borders                                   |
+| Poker felt               | deep green table image (`poker-table-green.png`)                                                                                                                           | Poker table background                                      |
 | Blackjack/card-hand felt | radial gradient `rgb(194,1,1) → rgb(131,1,1) 30% → rgb(41,0,0) 70% → black`, 15px outset grey border `rgba(162,162,172,0.9)`, `border-radius: 20%`, heavy black box-shadow | "Hand" felt container — a red velvet look rather than green |
-| Card front placeholder | `#ffcc00` (yellow) | Card.jsx CSS-module fallback before art loads |
-| Card back panel | `#333` | Card.jsx CSS-module fallback |
+| Card front placeholder   | `#ffcc00` (yellow)                                                                                                                                                         | Card.jsx CSS-module fallback before art loads               |
+| Card back panel          | `#333`                                                                                                                                                                     | Card.jsx CSS-module fallback                                |
 
 No CSS custom-property design-token system was used beyond a couple of RGB vars for the (unused)
 light/dark background gradient in `globals.css`. Color values are otherwise hardcoded per-component
@@ -47,7 +47,7 @@ Four fonts, all via `next/font/google`, no self-hosted files:
 - **Bangers** (`bangers`) — comic-book shout font. Used for: hero H1 ("Welcome To Casino Madness"),
   game preview card titles, CTA buttons, slot machine bet/winnings labels, login modal heading, nav
   link labels alongside Roboto Slab in some places.
-- **Nosifer** (`nosifer`) — dripping/horror display font. Used *only* for in-game titles
+- **Nosifer** (`nosifer`) — dripping/horror display font. Used _only_ for in-game titles
   (`GameHeader` — "5 Card Draw", etc.), paired with a CSS 3D perspective transform + red/white/black
   text-shadow (`.TitleTransform`) to look carved/embossed.
 - **Roboto Slab** (`roboto_slab`) — slab-serif workhorse font. Used for: nav links, stat panels,
@@ -64,26 +64,49 @@ achievable with Bangers + the same text-shadow recipe if you want to drop a font
 ## Signature visual effects (worth recreating with Tailwind + CSS, not literal font/asset reuse)
 
 **Neon glow text** (`.glowText` in `globals.css`):
+
 ```css
-color: #fff; font-weight: bold;
-text-shadow: 0 0 7px #fe1323, 0 0 42px #fff, 0 0 82px #fff, 0 0 92px #fff;
+color: #fff;
+font-weight: bold;
+text-shadow:
+  0 0 7px #fe1323,
+  0 0 42px #fff,
+  0 0 82px #fff,
+  0 0 92px #fff;
 ```
 
 **Neon glow container** (`.glowContainer`) — wraps stat panels/buttons in a red halo:
+
 ```css
-box-shadow: 0 0 .2rem #fff, 0 0 .2rem #fff, 0 0 1.2rem #fe1323,
-            0 0 .8rem #fe1323, 0 0 2rem #fe1323, inset 0 0 1.3rem #fe1323;
+box-shadow:
+  0 0 0.2rem #fff,
+  0 0 0.2rem #fff,
+  0 0 1.2rem #fe1323,
+  0 0 0.8rem #fe1323,
+  0 0 2rem #fe1323,
+  inset 0 0 1.3rem #fe1323;
 ```
 
 **Neon pill button** (`.gameButton` / `.spinButton`) — combines the glow text + glow container recipe
 on a fully-rounded pill:
+
 ```css
-border: .2rem solid #fff; border-radius: 2rem; padding: .4em;
+border: 0.2rem solid #fff;
+border-radius: 2rem;
+padding: 0.4em;
 color: #fff;
-text-shadow: 0 0 7px #fe1323, 0 0 10px #fe1323, 0 0 21px #fe1323,
-             0 0 42px #fff, 0 0 82px #fff, 0 0 92px #fff, 0 0 102px #fff, 0 0 151px #fff;
+text-shadow:
+  0 0 7px #fe1323,
+  0 0 10px #fe1323,
+  0 0 21px #fe1323,
+  0 0 42px #fff,
+  0 0 82px #fff,
+  0 0 92px #fff,
+  0 0 102px #fff,
+  0 0 151px #fff;
 box-shadow: /* same as glowContainer */;
 ```
+
 Slots swaps `#fe1323` → `#194fff` for a blue neon variant on the Spin button — a reusable pattern:
 **one glow-button mixin parameterized by accent color**.
 
@@ -95,8 +118,12 @@ Nice detail worth porting as a reusable `<NeonHeading>` component with `motion`-
 instead of raw CSS `@keyframes` + `data-text` attr trick.
 
 **Carved title effect** (`.TitleTransform`, used with Nosifer for game titles):
+
 ```css
-text-shadow: red 1px 1px 1px, white 0 -4px 0, black 2px 2px 2px;
+text-shadow:
+  red 1px 1px 1px,
+  white 0 -4px 0,
+  black 2px 2px 2px;
 transform: perspective(350px) rotateX(-35deg);
 ```
 
@@ -108,6 +135,7 @@ opacity over blur**, so the felt/background art shows through.
 ## Component patterns worth adapting (not copying)
 
 ### 1. Game preview / lobby card (`Previews/GamePreview.jsx`)
+
 White rounded card, image on top (fixed aspect via `h-3/6`), title + description body, footer is a
 red→black horizontal gradient bar with a black pill "Play" CTA. Hover: `translate-y-1` lift +
 `scale-105` + border color shift to red. Optional "Testing" ribbon badge (absolutely positioned,
@@ -115,11 +143,13 @@ rotated 45°, translucent red) for WIP games. **Adapt as**: `GameLobbyCard` comp
 for a game-select dashboard grid, drop the ribbon unless there's an actual beta-flag need.
 
 ### 2. Game title header (`Headers/GameHeader.jsx`)
+
 Full-width banner: container padding, background image (comic art) at low opacity behind a large
 carved-look H1. **Adapt as**: a per-game page header — pass a background image + title, keep the
 carved-text effect, drop the exact image dependency (need CC0 replacements per AGENTS/CLAUDE rules).
 
 ### 3. Stats/HUD panel (`GameStats/PokerStats.jsx`)
+
 Fixed-position glass panel (top-left, rounded-[20px], glowContainer) listing: current bank, total
 losses, total wins, and a bet-size `<select>` (25/50/100/150/250 fixed tiers). **Adapt as**: a
 `GameHUD` component reading from TanStack Query (server balance) rather than Redux — this is exactly
@@ -127,6 +157,7 @@ the "server state" balance display the new architecture calls for. The fixed bet
 reasonable, simple bet-control UX worth keeping (vs. a free-text input) for a play-money casino.
 
 ### 4. Action bar / button rail (`ActionBars/PokerBar.jsx`, `PokerPlayBar.jsx`)
+
 Two separate button rails: a vertical "meta" rail (New Game / Reset / Quit) pinned top-right, and a
 horizontal "play" rail (Deal / Draw / Stand) pinned bottom-center, each button wrapped in
 `react-parallax-tilt` for a 3D tilt-on-hover feel, buttons dim to `opacity-20` + `disabled` when not
@@ -136,16 +167,18 @@ XState machine's `can(...)` guards — the disabled/opacity/tilt pattern transla
 `useState` booleans.
 
 ### 5. Card component (`Cards/Card.jsx`)
+
 3D flip card built on `backface-visibility: hidden` + `rotateY(180deg)`, animated with Framer Motion
 (`whileHover: scale 1.3`, `whileTap: scale .9`), sprite naming convention `{suitLetter}{rankValue}.png`
 (e.g. `h2.png`…`h14.png` where 11–14 = J/Q/K/A) plus one shared `cardback.png`. Click toggles a
-"select for discard" flag (poker draw mechanic) rather than a flip-to-reveal — flipping *state* is
-overloaded with *game logic* here, which is a smell. **Adapt as**: keep the sprite-sheet naming
+"select for discard" flag (poker draw mechanic) rather than a flip-to-reveal — flipping _state_ is
+overloaded with _game logic_ here, which is a smell. **Adapt as**: keep the sprite-sheet naming
 convention (cheap to generate/replace with CC0 card art) and the CSS flip technique, but separate
 "is face up" (derived from server-authoritative game state) from "is selected for an action"
 (local UI-only) — two different booleans, not one.
 
 ### 6. Card hand layout (`CardContainers/CardFive.jsx`)
+
 Simple responsive grid (`grid-cols-3` → `sm:4` → `md:5`) for a 5-card hand, absolutely positioned
 over the table felt. Works fine as a layout primitive; the absolute-positioning-over-a-background-image
 approach is fragile (breaks aspect ratio on resize) — recommend a proper flex/grid table layout with
@@ -153,7 +186,9 @@ the felt as a CSS background on a sized container instead of an `<Image fill>` b
 absolutely-positioned children.
 
 ### 7. Table felt containers (`GameTables/PokerTable.jsx`, `.Hand` in GameTables css)
+
 Two felt treatments worth keeping conceptually:
+
 - **Poker**: full-bleed background photo of a green felt table (`poker-table-green.png`), UI floats
   on top in glass panels.
 - **Blackjack/generic hand**: a CSS-only red radial-gradient "velvet" panel with a thick metallic
@@ -162,17 +197,20 @@ Two felt treatments worth keeping conceptually:
   wanted) — recommend building the new blackjack table this way rather than sourcing a felt photo.
 
 ### 8. Top nav (`Navs/TopNav.jsx`)
+
 Sticky black nav, hamburger toggle on mobile (`react-icons` `FaBars`), logo image + text links in
 Bangers font, red-blood bottom border on mobile-open state and on link hover. Simple and reusable
 as-is conceptually; rebuild logout via Better Auth session invalidation instead of the Redux
 `resetStore()` call.
 
 ### 9. Odds/paytable (`GameOdds/PokerOdds.jsx`)
+
 Plain semantic `<table>` for hand-rank payout odds, dark translucent background, large bold text.
 Good minimal reference for a slots/poker paytable component — no changes needed structurally, just
 restyle to new palette.
 
 ### 10. Auth forms (`AuthForms/LoginForm.jsx`)
+
 White rounded modal card floating on black page background, red-tinted input fields (`bg-red-50`),
 black pill submit button that turns red on hover. Note: this form posts directly to a hardcoded
 `http://localhost:3000/api/auth` and manages session via Redux — **do not port the auth mechanics**,
@@ -241,6 +279,7 @@ The two words together form one visual unit — "Casino" is the straight-man, "M
 Background context in the original: a dark Las Vegas skyline photo with a dark overlay.
 
 This two-tier treatment should be used:
+
 - On the login page logo
 - On the main dashboard/lobby header
 - Anywhere the full brand name appears as a hero element

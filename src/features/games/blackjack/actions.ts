@@ -1,15 +1,15 @@
-'use server';
+"use server";
 
-import { headers, cookies } from 'next/headers';
-import { createActor } from 'xstate';
-import type { Prisma } from '../../../../generated/prisma/client';
-import { auth } from '@/lib/auth';
-import { prisma } from '@/lib/prisma';
-import { env } from '@/lib/env';
-import { signCookie, verifyCookie } from '@/lib/signed-cookie';
-import { makeRng } from '@/lib/game-core/rng';
-import { blackjackMachine } from '@/features/games/blackjack/machines/blackjack.machine';
-import { placeBetInput, playerActionInput } from '@/features/games/blackjack/schemas';
+import { headers, cookies } from "next/headers";
+import { createActor } from "xstate";
+import type { Prisma } from "../../../../generated/prisma/client";
+import { auth } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+import { env } from "@/lib/env";
+import { signCookie, verifyCookie } from "@/lib/signed-cookie";
+import { makeRng } from "@/lib/game-core/rng";
+import { blackjackMachine } from "@/features/games/blackjack/machines/blackjack.machine";
+import { placeBetInput, playerActionInput } from "@/features/games/blackjack/schemas";
 import {
   BJ_COOKIE_NAME,
   BJ_COOKIE_MAX_AGE_SECONDS,
@@ -18,20 +18,24 @@ import {
   rehydrateActor,
   toInProgressView,
   toResolvedView,
-} from '@/features/games/blackjack/session';
-import type { BjCookiePayload, InProgressView, ResolvedView } from '@/features/games/blackjack/session';
+} from "@/features/games/blackjack/session";
+import type {
+  BjCookiePayload,
+  InProgressView,
+  ResolvedView,
+} from "@/features/games/blackjack/session";
 
 type BlackjackActionError =
-  | { code: 'UNAUTHENTICATED'; message: string }
-  | { code: 'VALIDATION_ERROR'; message: string }
-  | { code: 'PROFILE_NOT_FOUND'; message: string }
-  | { code: 'INSUFFICIENT_FUNDS'; message: string }
-  | { code: 'SESSION_NOT_FOUND'; message: string }
-  | { code: 'CONCURRENT_UPDATE'; message: string };
+  | { code: "UNAUTHENTICATED"; message: string }
+  | { code: "VALIDATION_ERROR"; message: string }
+  | { code: "PROFILE_NOT_FOUND"; message: string }
+  | { code: "INSUFFICIENT_FUNDS"; message: string }
+  | { code: "SESSION_NOT_FOUND"; message: string }
+  | { code: "CONCURRENT_UPDATE"; message: string };
 
 export type ActionResult<T> = { ok: true; data: T } | { ok: false; error: BlackjackActionError };
 
-function fail(code: BlackjackActionError['code'], message: string): ActionResult<never> {
+function fail(code: BlackjackActionError["code"], message: string): ActionResult<never> {
   return { ok: false, error: { code, message } };
 }
 
@@ -74,29 +78,31 @@ async function creditPayout(
     data: {
       userId: params.userId,
       gameSessionId: params.gameSessionId,
-      type: 'PAYOUT',
+      type: "PAYOUT",
       amount: params.payoutCents,
       balanceAfter: params.finalBalance,
     },
   });
 }
 
-export async function startGame(input: unknown): Promise<ActionResult<InProgressView | ResolvedView>> {
+export async function startGame(
+  input: unknown,
+): Promise<ActionResult<InProgressView | ResolvedView>> {
   const authSession = await auth.api.getSession({ headers: await headers() });
-  if (!authSession) return fail('UNAUTHENTICATED', 'You must be signed in to play.');
+  if (!authSession) return fail("UNAUTHENTICATED", "You must be signed in to play.");
 
   const parsed = placeBetInput.safeParse(input);
-  if (!parsed.success) return fail('VALIDATION_ERROR', 'Invalid bet amount.');
+  if (!parsed.success) return fail("VALIDATION_ERROR", "Invalid bet amount.");
   const bet = parsed.data;
 
   const userId = authSession.user.id;
   const profile = await prisma.profile.findFirst({ where: { userId, deletedAt: null } });
   if (!profile) {
-    return fail('PROFILE_NOT_FOUND', 'No active profile found for this account.');
+    return fail("PROFILE_NOT_FOUND", "No active profile found for this account.");
   }
 
   if (bet > profile.bank) {
-    return fail('INSUFFICIENT_FUNDS', 'Bet exceeds available balance.');
+    return fail("INSUFFICIENT_FUNDS", "Bet exceeds available balance.");
   }
 
   // Machine runs before any DB write: it's pure computation, so both possible
@@ -104,20 +110,20 @@ export async function startGame(input: unknown): Promise<ActionResult<InProgress
   // known up front and can each be written atomically below.
   const actor = createActor(blackjackMachine, { input: { rng: makeRng() } });
   actor.start();
-  actor.send({ type: 'PLACE_BET', amount: bet });
-  actor.send({ type: 'DEAL' });
+  actor.send({ type: "PLACE_BET", amount: bet });
+  actor.send({ type: "DEAL" });
   const snapshot = serializeSnapshot(actor);
 
   const betBalanceAfter = profile.bank - bet;
 
-  if (snapshot.value !== 'resolved') {
+  if (snapshot.value !== "resolved") {
     let gameSession;
     try {
       gameSession = await prisma.$transaction(async (tx) => {
         const created = await tx.gameSession.create({
           data: {
             userId,
-            gameType: 'BLACKJACK',
+            gameType: "BLACKJACK",
             bet,
             outcome: null,
             payout: null,
@@ -127,7 +133,7 @@ export async function startGame(input: unknown): Promise<ActionResult<InProgress
           data: {
             userId,
             gameSessionId: created.id,
-            type: 'BET',
+            type: "BET",
             amount: -bet,
             balanceAfter: betBalanceAfter,
           },
@@ -146,7 +152,7 @@ export async function startGame(input: unknown): Promise<ActionResult<InProgress
       });
     } catch (error) {
       if (error instanceof ConcurrentUpdateError) {
-        return fail('CONCURRENT_UPDATE', 'Balance changed — please try again.');
+        return fail("CONCURRENT_UPDATE", "Balance changed — please try again.");
       }
       throw error;
     }
@@ -158,10 +164,10 @@ export async function startGame(input: unknown): Promise<ActionResult<InProgress
     };
     (await cookies()).set(BJ_COOKIE_NAME, signCookie(payload, env.BLACKJACK_SESSION_SECRET), {
       httpOnly: true,
-      sameSite: 'strict',
-      secure: process.env.NODE_ENV === 'production',
+      sameSite: "strict",
+      secure: process.env.NODE_ENV === "production",
       maxAge: BJ_COOKIE_MAX_AGE_SECONDS,
-      path: '/',
+      path: "/",
     });
 
     return { ok: true, data: toInProgressView(snapshot, betBalanceAfter) };
@@ -178,7 +184,7 @@ export async function startGame(input: unknown): Promise<ActionResult<InProgress
       const created = await tx.gameSession.create({
         data: {
           userId,
-          gameType: 'BLACKJACK',
+          gameType: "BLACKJACK",
           bet,
           outcome: snapshot.context.outcome,
           payout: payoutCents,
@@ -189,7 +195,7 @@ export async function startGame(input: unknown): Promise<ActionResult<InProgress
         data: {
           userId,
           gameSessionId: created.id,
-          type: 'BET',
+          type: "BET",
           amount: -bet,
           balanceAfter: betBalanceAfter,
         },
@@ -204,7 +210,7 @@ export async function startGame(input: unknown): Promise<ActionResult<InProgress
     });
   } catch (error) {
     if (error instanceof ConcurrentUpdateError) {
-      return fail('CONCURRENT_UPDATE', 'Balance changed — please try again.');
+      return fail("CONCURRENT_UPDATE", "Balance changed — please try again.");
     }
     throw error;
   }
@@ -212,31 +218,33 @@ export async function startGame(input: unknown): Promise<ActionResult<InProgress
   return { ok: true, data: toResolvedView(snapshot, finalBalance) };
 }
 
-export async function playerAction(input: unknown): Promise<ActionResult<InProgressView | ResolvedView>> {
+export async function playerAction(
+  input: unknown,
+): Promise<ActionResult<InProgressView | ResolvedView>> {
   const authSession = await auth.api.getSession({ headers: await headers() });
-  if (!authSession) return fail('UNAUTHENTICATED', 'You must be signed in to play.');
+  if (!authSession) return fail("UNAUTHENTICATED", "You must be signed in to play.");
 
   const parsed = playerActionInput.safeParse(input);
-  if (!parsed.success) return fail('VALIDATION_ERROR', 'Invalid action.');
+  if (!parsed.success) return fail("VALIDATION_ERROR", "Invalid action.");
   const action = parsed.data;
 
   const userId = authSession.user.id;
   const cookieStore = await cookies();
   const raw = cookieStore.get(BJ_COOKIE_NAME)?.value;
   const verified = raw ? verifyCookie<unknown>(raw, env.BLACKJACK_SESSION_SECRET) : null;
-  if (verified === null) return fail('SESSION_NOT_FOUND', 'No active round found.');
+  if (verified === null) return fail("SESSION_NOT_FOUND", "No active round found.");
 
   // The HMAC check only proves the bytes weren't tampered with — it says
   // nothing about whether the parsed JSON matches BjCookiePayload's shape.
   const parsedPayload = bjCookiePayloadSchema.safeParse(verified);
-  if (!parsedPayload.success) return fail('SESSION_NOT_FOUND', 'No active round found.');
+  if (!parsedPayload.success) return fail("SESSION_NOT_FOUND", "No active round found.");
   const payload: BjCookiePayload = parsedPayload.data;
 
   const actor = rehydrateActor(payload.snapshot);
-  actor.send({ type: action === 'hit' ? 'HIT' : 'STAND' });
+  actor.send({ type: action === "hit" ? "HIT" : "STAND" });
   const snapshot = serializeSnapshot(actor);
 
-  if (snapshot.value !== 'resolved') {
+  if (snapshot.value !== "resolved") {
     const newPayload: BjCookiePayload = {
       gameSessionId: payload.gameSessionId,
       snapshot,
@@ -244,10 +252,10 @@ export async function playerAction(input: unknown): Promise<ActionResult<InProgr
     };
     cookieStore.set(BJ_COOKIE_NAME, signCookie(newPayload, env.BLACKJACK_SESSION_SECRET), {
       httpOnly: true,
-      sameSite: 'strict',
-      secure: process.env.NODE_ENV === 'production',
+      sameSite: "strict",
+      secure: process.env.NODE_ENV === "production",
       maxAge: BJ_COOKIE_MAX_AGE_SECONDS,
-      path: '/',
+      path: "/",
     });
     return { ok: true, data: toInProgressView(snapshot, payload.balanceAfter) };
   }
@@ -280,10 +288,10 @@ export async function playerAction(input: unknown): Promise<ActionResult<InProgr
     });
   } catch (error) {
     if (error instanceof SessionNotFoundError) {
-      return fail('SESSION_NOT_FOUND', 'No active round found.');
+      return fail("SESSION_NOT_FOUND", "No active round found.");
     }
     if (error instanceof ConcurrentUpdateError) {
-      return fail('CONCURRENT_UPDATE', 'Balance changed — please try again.');
+      return fail("CONCURRENT_UPDATE", "Balance changed — please try again.");
     }
     throw error;
   }

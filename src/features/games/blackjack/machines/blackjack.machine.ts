@@ -1,12 +1,12 @@
-import { setup, assign } from 'xstate';
-import { makeDeck, shuffle } from '@/lib/game-core/deck';
-import { toMoney } from '@/lib/game-core/money';
-import { isBust, isBlackjack, handValue } from '@/features/games/blackjack/engine/rules';
-import { dealerShouldHit } from '@/features/games/blackjack/engine/dealer';
-import { resolvePayout } from '@/features/games/blackjack/engine/payout';
-import type { PayoutOutcome } from '@/features/games/blackjack/engine/payout';
-import type { Card } from '@/lib/game-core/types';
-import type { BlackjackContext, BlackjackEvent, BlackjackInput } from './blackjack.types';
+import { setup, assign } from "xstate";
+import { makeDeck, shuffle } from "@/lib/game-core/deck";
+import { toMoney } from "@/lib/game-core/money";
+import { isBust, isBlackjack, handValue } from "@/features/games/blackjack/engine/rules";
+import { dealerShouldHit } from "@/features/games/blackjack/engine/dealer";
+import { resolvePayout } from "@/features/games/blackjack/engine/payout";
+import type { PayoutOutcome } from "@/features/games/blackjack/engine/payout";
+import type { Card } from "@/lib/game-core/types";
+import type { BlackjackContext, BlackjackEvent, BlackjackInput } from "./blackjack.types";
 
 export const blackjackMachine = setup({
   types: {
@@ -23,7 +23,7 @@ export const blackjackMachine = setup({
     assignBet: assign({
       bet: ({ event }) => {
         // Safe: assignBet is only wired to PLACE_BET transitions
-        const { amount } = event as Extract<BlackjackEvent, { type: 'PLACE_BET' }>;
+        const { amount } = event as Extract<BlackjackEvent, { type: "PLACE_BET" }>;
         return toMoney(amount);
       },
     }),
@@ -57,19 +57,19 @@ export const blackjackMachine = setup({
       // This is a deliberate simplification — not an oversight of the peek rule.
       let outcome: PayoutOutcome;
       if (isBust(context.playerHand)) {
-        outcome = 'bust';
+        outcome = "bust";
       } else if (isBlackjack(context.playerHand)) {
         // Natural: both-blackjack is a push; dealer blackjack detected here, not before playerTurn
-        outcome = isBlackjack(context.dealerHand) ? 'push' : 'blackjack';
+        outcome = isBlackjack(context.dealerHand) ? "push" : "blackjack";
       } else if (isBust(context.dealerHand)) {
-        outcome = 'win';
+        outcome = "win";
       } else if (isBlackjack(context.dealerHand)) {
         // Dealer natural beats any non-natural player hand, including 3-card 21
-        outcome = 'loss';
+        outcome = "loss";
       } else {
         const pv = handValue(context.playerHand);
         const dv = handValue(context.dealerHand);
-        outcome = pv > dv ? 'win' : pv === dv ? 'push' : 'loss';
+        outcome = pv > dv ? "win" : pv === dv ? "push" : "loss";
       }
       return { outcome, payout: resolvePayout(context.bet, outcome) };
     }),
@@ -82,8 +82,8 @@ export const blackjackMachine = setup({
     })),
   },
 }).createMachine({
-  id: 'blackjack',
-  initial: 'idle',
+  id: "blackjack",
+  initial: "idle",
   context: ({ input }) => ({
     rng: input.rng,
     deck: [] as readonly Card[],
@@ -96,44 +96,41 @@ export const blackjackMachine = setup({
   states: {
     idle: {
       on: {
-        PLACE_BET: { target: 'betting', actions: 'assignBet' },
+        PLACE_BET: { target: "betting", actions: "assignBet" },
       },
     },
     betting: {
       on: {
-        DEAL: { target: 'dealing' },
+        DEAL: { target: "dealing" },
       },
     },
     // Transient state: entry deals cards, always immediately advances
     dealing: {
-      entry: 'dealInitialHands',
-      always: [
-        { guard: 'playerBlackjack', target: 'resolved' },
-        { target: 'playerTurn' },
-      ],
+      entry: "dealInitialHands",
+      always: [{ guard: "playerBlackjack", target: "resolved" }, { target: "playerTurn" }],
     },
     playerTurn: {
       // Re-evaluated on every entry — catches bust after HIT re-enters this state
-      always: [{ guard: 'playerBust', target: 'resolved' }],
+      always: [{ guard: "playerBust", target: "resolved" }],
       on: {
         // Explicit self-transition (re-entry) so always re-fires the bust check
-        HIT: { target: 'playerTurn', actions: 'drawPlayerCard' },
-        STAND: { target: 'dealerTurn' },
+        HIT: { target: "playerTurn", actions: "drawPlayerCard" },
+        STAND: { target: "dealerTurn" },
       },
     },
     // Auto-advancing: dealer draws synchronously until dealerShouldHit returns false
     dealerTurn: {
       always: [
-        { guard: 'dealerShouldContinue', target: 'dealerTurn', actions: 'drawDealerCard' },
-        { target: 'resolved' },
+        { guard: "dealerShouldContinue", target: "dealerTurn", actions: "drawDealerCard" },
+        { target: "resolved" },
       ],
     },
     resolved: {
-      entry: 'resolveOutcome',
+      entry: "resolveOutcome",
       on: {
         PLACE_BET: {
-          target: 'betting',
-          actions: ['clearForNextRound', 'assignBet'],
+          target: "betting",
+          actions: ["clearForNextRound", "assignBet"],
         },
       },
     },
