@@ -56,9 +56,14 @@ export function BlackjackGameClient() {
   const playerActionMutation = usePlayerAction();
 
   const betCents = Math.round(Number(betDollars) * 100);
+  // Whole-dollar bets only, for now: the eventual bet UI is $1/$5/$10/$25/
+  // $50/$100 chip buttons that only ever add whole-dollar increments, so
+  // this input should already match that constraint rather than accepting
+  // amounts (e.g. $1.01) the chip UI could never actually produce.
   const isValidBet =
     betDollars.trim() !== "" &&
     Number.isInteger(betCents) &&
+    betCents % 100 === 0 &&
     betCents >= MIN_BET_CENTS &&
     betCents <= MAX_BET_CENTS;
 
@@ -119,7 +124,16 @@ export function BlackjackGameClient() {
   const dealerHandValue = view && isResolved(view) ? handValue(view.dealerHand) : null;
 
   return (
-    <div className="flex flex-col items-center gap-6">
+    // w-full is required here, not decorative: BlackjackTable's root div
+    // resolves its own w-full max-w-5xl against THIS div's width. Without an
+    // explicit width, this wrapper (a flex item of page.tsx's row-direction
+    // flex container) shrink-to-fits its content instead of taking the
+    // container's available width, collapsing the whole percentage-width
+    // chain down to BlackjackTable's absolutely-positioned children's
+    // natural (near-zero) size - the "tiny table" bug. The dev-preview page
+    // never hit this because BlackjackTable was a direct flex child there,
+    // with no intermediate no-width wrapper.
+    <div className="flex flex-col items-center gap-6 w-full">
       <BlackjackTable
         dealerCards={dealerSlots.map((slot, i) => (
           <div key={i}>
@@ -142,70 +156,90 @@ export function BlackjackGameClient() {
         ))}
       />
 
-      {view === null && (
-        <div className="flex flex-col items-center gap-4">
-          {!userId ? (
-            <p className="text-white">Sign in to play blackjack.</p>
-          ) : (
-            <>
-              <label className="flex flex-col items-center gap-2 text-white">
-                Bet amount
-                <input
-                  type="number"
-                  step="0.01"
-                  min={MIN_BET_CENTS / 100}
-                  max={MAX_BET_CENTS / 100}
-                  value={betDollars}
-                  onChange={(e) => setBetDollars(e.target.value)}
-                  className="rounded bg-black/40 border border-white/30 px-3 py-2 text-white text-center"
-                />
-              </label>
-              <GlowButton
-                disabled={!isValidBet || startGameMutation.isPending}
-                onClick={() =>
-                  startGameMutation.mutate(betCents, { onSuccess: (data) => setView(data) })
-                }
-              >
-                {startGameMutation.isPending ? "Dealing..." : "Place Bet"}
-              </GlowButton>
-            </>
-          )}
-        </div>
-      )}
+      {/*
+        min-h-[260px] reserves a fixed-height zone for this whole action
+        area, which cycles through three differently-sized blocks (bet form,
+        Hit/Stand buttons, resolved outcome) plus an optional inline error
+        line. Without a fixed floor here, each state change resizes this
+        area, and since page.tsx vertically centers its content
+        (items-center justify-center), any height change reflows and visibly
+        shifts the ENTIRE page - including the table above - not just this
+        area. Reserving the height up front keeps the table's position
+        stable across bet -> hit/stand -> resolved transitions. justify-center
+        (rather than the flex default of flex-start) centers whichever block
+        is showing within this reserved zone, instead of pinning it to the
+        top and leaving visible dead space below shorter content like the
+        Hit/Stand row.
+      */}
+      <div className="flex flex-col items-center justify-center gap-4 min-h-[260px]">
+        {view === null && (
+          <div className="flex flex-col items-center gap-4">
+            {!userId ? (
+              <p className="text-white">Sign in to play blackjack.</p>
+            ) : (
+              <>
+                <label className="flex flex-col items-center gap-2 text-white">
+                  Bet amount
+                  <input
+                    type="number"
+                    step="1"
+                    min={MIN_BET_CENTS / 100}
+                    max={MAX_BET_CENTS / 100}
+                    value={betDollars}
+                    onChange={(e) => setBetDollars(e.target.value)}
+                    className="rounded bg-black/40 border border-white/30 px-3 py-2 text-white text-center"
+                  />
+                </label>
+                <GlowButton
+                  disabled={!isValidBet || startGameMutation.isPending}
+                  onClick={() =>
+                    startGameMutation.mutate(betCents, { onSuccess: (data) => setView(data) })
+                  }
+                >
+                  {startGameMutation.isPending ? "Dealing..." : "Place Bet"}
+                </GlowButton>
+              </>
+            )}
+          </div>
+        )}
 
-      {view && !isResolved(view) && (
-        <div className="flex gap-4">
-          <GlowButton disabled={playerActionMutation.isPending} onClick={() => handlePlayerAction("hit")}>
-            Hit
-          </GlowButton>
-          <GlowButton
-            accent="blue"
-            disabled={playerActionMutation.isPending}
-            onClick={() => handlePlayerAction("stand")}
-          >
-            Stand
-          </GlowButton>
-        </div>
-      )}
+        {view && !isResolved(view) && (
+          <div className="flex gap-4">
+            <GlowButton
+              disabled={playerActionMutation.isPending}
+              onClick={() => handlePlayerAction("hit")}
+            >
+              Hit
+            </GlowButton>
+            <GlowButton
+              accent="blue"
+              disabled={playerActionMutation.isPending}
+              onClick={() => handlePlayerAction("stand")}
+            >
+              Stand
+            </GlowButton>
+          </div>
+        )}
 
-      {view && isResolved(view) && (
-        <div className="flex flex-col items-center gap-2 text-white">
-          <p className="text-xl font-display">{OUTCOME_MESSAGES[view.outcome]}</p>
-          <p>{toDisplayString(toMoney(view.payout))}</p>
-          <GlowButton
-            onClick={() => {
-              setView(null);
-              setBetDollars("");
-              playerActionMutation.reset();
-              startGameMutation.reset();
-            }}
-          >
-            Play Again
-          </GlowButton>
-        </div>
-      )}
+        {view && isResolved(view) && (
+          <div className="flex flex-col items-center gap-2 text-white">
+            <p className="text-xl font-display">{OUTCOME_MESSAGES[view.outcome]}</p>
+            <p>{toDisplayString(toMoney(view.payout))}</p>
+            <GlowButton
+              onClick={() => {
+                setView(null);
+                setBetDollars("");
+                playerActionMutation.reset();
+                startGameMutation.reset();
+              }}
+            >
+              Play Again
+            </GlowButton>
+          </div>
+        )}
 
-      {errorMessage && !sessionLostModalOpen && <p className="text-red-400">{errorMessage}</p>}
+        {errorMessage && !sessionLostModalOpen && <p className="text-red-400">{errorMessage}</p>}
+      </div>
 
       {sessionLostModalOpen && (
         <div

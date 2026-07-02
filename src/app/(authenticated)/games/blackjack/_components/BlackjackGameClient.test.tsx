@@ -125,6 +125,56 @@ beforeEach(() => {
 });
 
 describe("BlackjackGameClient", () => {
+  describe("layout", () => {
+    // Regression test for the "tiny table" bug: the root wrapper div sits
+    // between page.tsx's row-direction flex container and BlackjackTable's
+    // own w-full max-w-5xl root div. Without an explicit width on this
+    // wrapper, it shrink-to-fits instead of taking the available width,
+    // collapsing BlackjackTable's percentage-width chain. jsdom does not
+    // perform real layout, so this only confirms the `w-full` class string
+    // is present on the wrapper - it cannot verify the fix visually renders
+    // a full-width table. That's exercised by manual/browser testing.
+    it("renders the root wrapper div with the w-full class", () => {
+      const { container } = renderWithProviders(<BlackjackGameClient />);
+
+      expect(container.firstElementChild).toHaveClass("w-full");
+    });
+
+    // Regression test for the "page jumps on Hit/Stand/Place Bet" bug: the
+    // action area below the table (bet form / Hit-Stand row / resolved
+    // outcome, plus the optional inline error) must share one wrapper that
+    // reserves a fixed min-height, so switching between those differently
+    // sized blocks doesn't change this area's height and reflow page.tsx's
+    // vertically-centered layout (which would visibly move the table above
+    // it too). jsdom doesn't perform real layout, so this only confirms the
+    // `min-h-[260px]` class string is present on that wrapper - it cannot
+    // verify the fix visually prevents reflow. That's exercised by
+    // manual/browser testing.
+    it("renders the action-area wrapper with the min-h-[260px] class", () => {
+      const { container } = renderWithProviders(<BlackjackGameClient />);
+
+      const wrapper = container.querySelector('[class*="min-h-[260px]"]');
+      expect(wrapper).not.toBeNull();
+      expect(wrapper).toHaveClass("min-h-[260px]");
+      // Sanity-check it's actually wrapping the bet form, not some unrelated
+      // element that happens to carry the class.
+      expect(wrapper).toContainElement(screen.getByLabelText("Bet amount"));
+    });
+
+    // Companion assertion: this wrapper also centers its content vertically
+    // (justify-center) within the reserved min-height zone, rather than
+    // pinning shorter content (e.g. the Hit/Stand button row) to the top and
+    // leaving dead space below. jsdom doesn't perform real layout, so this
+    // only confirms the `justify-center` class string is present - it cannot
+    // verify the visual centering. That's exercised by manual/browser testing.
+    it("renders the action-area wrapper with the justify-center class", () => {
+      const { container } = renderWithProviders(<BlackjackGameClient />);
+
+      const wrapper = container.querySelector('[class*="min-h-[260px]"]');
+      expect(wrapper).toHaveClass("justify-center");
+    });
+  });
+
   describe("bet screen", () => {
     it("renders the bet screen by default (no active round)", () => {
       renderWithProviders(<BlackjackGameClient />);
@@ -141,6 +191,15 @@ describe("BlackjackGameClient", () => {
       ["1000.01", true],
       ["1.00", false],
       ["1000", false],
+      // Whole-dollar-only constraint (matches the future $1/$5/$10/$25/$50/
+      // $100 chip UI, which can never produce a fractional-dollar total):
+      // non-whole-dollar amounts must stay disabled even when otherwise
+      // in-range, and whole-dollar boundary amounts must stay enabled.
+      ["1.01", true],
+      ["1.50", true],
+      ["5.99", true],
+      ["1", false],
+      ["5", false],
     ])("with bet input %j, Place Bet disabled=%s", (value, expectedDisabled) => {
       renderWithProviders(<BlackjackGameClient />);
 
@@ -171,6 +230,20 @@ describe("BlackjackGameClient", () => {
       renderWithProviders(<BlackjackGameClient />);
 
       await placeBet(user, "5.00");
+
+      expect(startGame).toHaveBeenCalledWith(500);
+    });
+
+    // Regression guard for the whole-dollar modulo check (betCents % 100 === 0):
+    // a plain whole-dollar entry like "5" (no decimal at all) must still be
+    // treated as valid and converted to the correct cents value, not just the
+    // "5.00" form already covered above.
+    it("calls startGame with the correct cents for a bare whole-dollar amount", async () => {
+      vi.mocked(startGame).mockResolvedValue(ok(inProgress()));
+      const user = userEvent.setup();
+      renderWithProviders(<BlackjackGameClient />);
+
+      await placeBet(user, "5");
 
       expect(startGame).toHaveBeenCalledWith(500);
     });
