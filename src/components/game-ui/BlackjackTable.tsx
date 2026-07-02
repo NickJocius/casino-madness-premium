@@ -1,5 +1,5 @@
 import Image from "next/image";
-import type { ReactNode } from "react";
+import { Children, type CSSProperties, type ReactNode } from "react";
 import {
   DEALER_CARD_ZONE,
   DEALER_HAND_VALUE_ZONE,
@@ -22,15 +22,42 @@ type BlackjackTableProps = {
   className?: string;
 };
 
-// Zone slots size their direct children to 9cqw (a card-shaped 5:7 box that's
-// always ~9% of the table's own rendered width, via Tailwind's built-in
-// container query units) rather than a fixed pixel width, so card size stays
-// proportional to the table at any viewport. Pass each card wrapped in a
-// plain <div> (not a bare PlayingCard) so this rule has a dedicated element to
-// target - a bare PlayingCard carries its own width class (e.g. from size="lg")
-// that would tie with this one at equal specificity. Use PlayingCard
-// size="responsive" (w-full) inside the wrapper to fill the slot exactly.
-const CARD_SLOT_CLASSES = "[&>*]:w-[9cqw] [&>*]:aspect-[5/7]";
+// Zone slots size their direct children to a card-shaped 5:7 box, capped at
+// 9cqw (always ~9% of the table's own rendered width, via Tailwind's built-in
+// container query units) but shrinking below that once a hand exceeds 5
+// cards, via min(9cqw, 45cqw / N) where N is the live card count set on
+// --bj-card-count below. At N<=5 (the common case: 2-card deal plus a hit or
+// two), 45/N >= 9, so min() picks 9cqw - behavior is UNCHANGED from a fixed
+// 9cqw for hands up to 5 cards. At N=6+, cards shrink proportionally instead
+// of overflowing the felt (6 cards at a fixed 9cqw + gaps would run past the
+// table's visible bounds). The 45cqw budget mirrors 5 x 9cqw and has not been
+// visually re-verified against the source art the way DEALER_HAND_VALUE_ZONE
+// was - flag for a visual check once a real 6+ card hand renders. Pass each
+// card wrapped in a plain <div> (not a bare PlayingCard) so this rule has a
+// dedicated element to target - a bare PlayingCard carries its own width
+// class (e.g. from size="lg") that would tie with this one at equal
+// specificity. Use PlayingCard size="responsive" (w-full) inside the wrapper
+// to fill the slot exactly.
+const CARD_SLOT_CLASSES =
+  "[&>*]:w-[min(9cqw,calc(45cqw/var(--bj-card-count)))] [&>*]:aspect-[5/7]";
+
+// @types/react's CSSProperties deliberately has no index signature (it
+// extends csstype's Properties<string|number> with none, per that type's own
+// doc comment - "use type assertion... to add properties or an index
+// signature of your own"), so a custom property key needs the whole style
+// object cast, not just the key - a lone `as string` cast on an
+// already-string key is a no-op and still fails against the closed type.
+function cardCountStyle(
+  zone: { top: string; left: string },
+  count: number,
+): CSSProperties {
+  return {
+    top: zone.top,
+    left: zone.left,
+    transform: "translateX(-50%)",
+    "--bj-card-count": count,
+  } as CSSProperties;
+}
 
 function HandValueBadge({ value }: { value: number | null }) {
   if (value === null) {
@@ -81,11 +108,7 @@ export function BlackjackTable({
         // proportional to the table at any size instead of a fixed-px gap
         // eating a growing share of the row on narrower viewports.
         className={`absolute flex justify-center gap-[1.2cqw] ${CARD_SLOT_CLASSES}`}
-        style={{
-          top: DEALER_CARD_ZONE.top,
-          left: DEALER_CARD_ZONE.left,
-          transform: "translateX(-50%)",
-        }}
+        style={cardCountStyle(DEALER_CARD_ZONE, Children.count(dealerCards))}
       >
         {dealerCards}
       </div>
@@ -103,11 +126,7 @@ export function BlackjackTable({
 
       <div
         className={`absolute flex justify-center ${CARD_SLOT_CLASSES}`}
-        style={{
-          top: PLAYER_CARD_ZONE.top,
-          left: PLAYER_CARD_ZONE.left,
-          transform: "translateX(-50%)",
-        }}
+        style={cardCountStyle(PLAYER_CARD_ZONE, Children.count(playerCards))}
       >
         {playerCards}
       </div>

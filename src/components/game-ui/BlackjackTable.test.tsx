@@ -57,7 +57,7 @@ describe("BlackjackTable", () => {
     expect(container.firstElementChild).toHaveClass("@container");
   });
 
-  it("sizes the dealer and player card zones to a 9cqw, 5:7-aspect card slot", () => {
+  it("sizes the dealer and player card zones to a capped-at-9cqw, 5:7-aspect card slot", () => {
     render(
       <BlackjackTable
         dealerCards={<span>DEALER-MARKER</span>}
@@ -70,10 +70,29 @@ describe("BlackjackTable", () => {
     const dealerZone = screen.getByText("DEALER-MARKER").parentElement;
     const playerZone = screen.getByText("PLAYER-MARKER").parentElement;
 
-    expect(dealerZone).toHaveClass("[&>*]:w-[9cqw]");
+    expect(dealerZone).toHaveClass("[&>*]:w-[min(9cqw,calc(45cqw/var(--bj-card-count)))]");
     expect(dealerZone).toHaveClass("[&>*]:aspect-[5/7]");
-    expect(playerZone).toHaveClass("[&>*]:w-[9cqw]");
+    expect(playerZone).toHaveClass("[&>*]:w-[min(9cqw,calc(45cqw/var(--bj-card-count)))]");
     expect(playerZone).toHaveClass("[&>*]:aspect-[5/7]");
+  });
+
+  it("sets --bj-card-count on each zone to its live child count, so the card-width formula shrinks past 5 cards", () => {
+    render(
+      <BlackjackTable
+        dealerCards={<span>ONE-CARD</span>}
+        playerCards={["A", "B", "C", "D", "E", "F"].map((label) => (
+          <span key={label}>{label}</span>
+        ))}
+        dealerHandValue={null}
+        playerHandValue={null}
+      />,
+    );
+
+    const dealerZone = screen.getByText("ONE-CARD").parentElement as HTMLElement;
+    const playerZone = screen.getByText("A").parentElement as HTMLElement;
+
+    expect(dealerZone.style.getPropertyValue("--bj-card-count")).toBe("1");
+    expect(playerZone.style.getPropertyValue("--bj-card-count")).toBe("6");
   });
 
   it("renders nothing for a null dealerHandValue while still showing a non-null playerHandValue", () => {
