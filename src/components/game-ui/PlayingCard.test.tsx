@@ -58,6 +58,19 @@ describe("PlayingCard", () => {
     expect(screen.queryByAltText(/of (hearts|diamonds|clubs|spades)/)).toBeNull();
   });
 
+  it("applies the w-full responsive width class (not a fixed-width class) when size is responsive", () => {
+    const { container } = render(
+      <PlayingCard card={{ suit: "hearts", rank: "A" }} faceUp={true} size="responsive" />,
+    );
+
+    const root = container.querySelector(".card-flip-scene");
+
+    expect(root).toHaveClass("w-full");
+    expect(root).not.toHaveClass("w-12");
+    expect(root).not.toHaveClass("w-20");
+    expect(root).not.toHaveClass("w-32");
+  });
+
   it("throws a contract-violation error when faceUp is true but card is null", () => {
     // PlayingCard throws synchronously during render (no error boundary involved), so
     // RTL's render() surfaces it directly here. React may additionally log a

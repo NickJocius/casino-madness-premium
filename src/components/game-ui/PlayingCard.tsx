@@ -5,7 +5,7 @@ import { motion } from "motion/react";
 import { cardImageSrc, CARDBACK_SRC } from "@/lib/game-core/card-assets";
 import type { Card } from "@/lib/game-core/types";
 
-export type PlayingCardSize = "sm" | "md" | "lg";
+export type PlayingCardSize = "sm" | "md" | "lg" | "responsive";
 
 type PlayingCardProps = {
   card: Card | null;
@@ -13,16 +13,24 @@ type PlayingCardProps = {
   size?: PlayingCardSize;
 };
 
+// "responsive" fills 100% of whatever box its parent gives it (e.g. a
+// container-query-sized slot) instead of a fixed viewport-agnostic width -
+// used when a layout needs the card to scale with something other than the
+// viewport, such as BlackjackTable's cqw-based card slots.
 const WIDTH_CLASSES: Record<PlayingCardSize, string> = {
   sm: "w-12",
   md: "w-20",
   lg: "w-32",
+  responsive: "w-full",
 };
 
 const IMAGE_SIZES: Record<PlayingCardSize, string> = {
   sm: "48px",
   md: "80px",
   lg: "128px",
+  // Rough upper-bound estimate: cqw can't be expressed in next/image's
+  // `sizes` hint, so this just approximates the largest expected render size.
+  responsive: "100px",
 };
 
 export function PlayingCard({ card, faceUp, size = "md" }: PlayingCardProps) {

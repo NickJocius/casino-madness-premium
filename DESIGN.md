@@ -285,3 +285,45 @@ This two-tier treatment should be used:
 - Anywhere the full brand name appears as a hero element
 
 For smaller contexts (nav, tab title, etc.) use "Casino Madness" in Bangers only, white, no split treatment.
+
+## Blackjack table — background-image + overlay approach (supersedes CSS FeltPanel for the main game surface)
+
+Decision: the blackjack table surface is a real background image (AI-generated), not a CSS gradient.
+FeltPanel's CSS radial-gradient recipe is kept as a component (tested, working) for smaller/secondary
+contexts — e.g. a lobby card's decorative flourish — but is NOT the main game table surface.
+
+Color/lighting direction (locked in, image itself still iterating):
+- Dual ambient theme: cool blue on the left/dealer side, warm red on the right/player side.
+- Thematic mapping: Blue = The Dealer (the house, cold and calculating). Red = The Mark (the player,
+  warm-blooded, in over their head). This is the visual expression of the "Dealer vs Mark" concept
+  established earlier — keep this mapping consistent across any future game table art (poker, etc.
+  would need their own antagonist-pair color logic if the theme extends).
+- Felt: traditional green (not red velvet) for the blackjack table specifically — a deliberate
+  departure from the site's red-blood accent, justified because it reads as "a real blackjack table"
+  more convincingly than a stylized color would.
+- Table shape: D-shaped, curved dealer rail, flat player edge, wood/leather bumper rail.
+
+Implementation approach: the table is a fixed-aspect-ratio container with the felt image as background;
+all card/chip/text positions are absolutely-positioned overlay elements using PERCENTAGE coordinates
+(not pixels), so the layout stays correctly aligned to the art at any screen width. Coordinate
+constants (dealer card zone, player card zone, bet circle positions) get defined once the final image
+is locked in and its exact zone positions are measured.
+
+## Concept art generation guidance (for staying comparable across iterations)
+
+When generating further table concepts, keep these fixed so iterations are apples-to-apples and
+whichever one gets picked drops in without rework:
+- Consistent aspect ratio across all concepts (recommend ~16:9 to ~1.8:1 landscape).
+- No cards, chips, or hands baked into the image — empty felt only, so real UI overlays cleanly.
+- Keep the center-felt area visually clear (no large logo/text placed where hand-value text will
+  overlay later).
+- Same camera angle/perspective across iterations (top-down-ish, slight tilt, matching the reference
+  concept) so overlay coordinate math doesn't need to be redone per-candidate.
+
+## Table image variants
+
+- `blackjackTableSingle.png` — PRIMARY, single-player table (one center betting circle, closer crop).
+  Matches the app's actual single-player architecture. Use this for the live game.
+- `blackjackTableMulti.png` — reserved/unused. Five-seat multiplayer layout. Not wired into any
+  component. Keep in public/images for potential future multi-seat mode; do not use for the current
+  single-player blackjack build.
