@@ -90,6 +90,7 @@ git commit · git push · npm install/uninstall · gh pr create · file deletion
 
 - zod-validate EVERY boundary: server actions, route handlers, env vars, and TanStack-fetched data. Unvalidated server-action input is a review BLOCKER.
 - Never trust client-sent game outcomes, balances, or payouts. The server computes results; the client only sends intents (bet, hit, fold).
+- CSS-hidden is not secret; absent data is secret. Client components must never receive secret data (e.g. a dealer's hole card) gated only by a visual "hidden" flag — elements like `next/image`/`fetch` issue real network requests for their `src`/URL regardless of CSS visibility, so the value would leak before the intended reveal. Accept `T | null` and omit the real value server-side until it's actually revealed; treat "flag says hidden but data is present" as a contract violation, not a renderable state.
 
 ### Auth
 
