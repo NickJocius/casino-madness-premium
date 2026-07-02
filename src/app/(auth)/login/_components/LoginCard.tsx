@@ -9,7 +9,7 @@ export function LoginCard() {
 
   async function handleGoogleSignIn() {
     setIsLoading(true);
-    await signIn.social({ provider: "google", callbackURL: "/dashboard" });
+    await signIn.social({ provider: "google", callbackURL: "/" });
   }
 
   return (

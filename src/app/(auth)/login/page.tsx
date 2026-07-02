@@ -5,7 +5,7 @@ import { LoginCard } from "./_components/LoginCard";
 
 export default async function LoginPage() {
   const session = await auth.api.getSession({ headers: await headers() });
-  if (session) redirect("/dashboard");
+  if (session) redirect("/");
 
   return (
     <main className="min-h-screen bg-black flex items-center justify-center p-4">

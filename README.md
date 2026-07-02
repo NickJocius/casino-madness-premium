@@ -35,6 +35,8 @@ The easiest way to deploy your Next.js app is to use the [Vercel Platform](https
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
 
+## Application Structure
+
 casino-madness-premium/
 ├── prisma/
 │ ├── schema.prisma # DB schema (User, GameSession, Transaction)
@@ -42,52 +44,52 @@ casino-madness-premium/
 │
 ├── src/
 │ ├── app/ # Next.js App Router (UI entry points)
-│ │ ├── (auth)/ # Auth route group
+│ │ ├── (auth)/ # Public auth pages — no session required
 │ │ │ ├── login/
-│ │ │ ├── register/
-│ │ │ └── layout.tsx # Auth layout
+│ │ │ │ └── page.tsx # Login page
 │ │ │
-│ │ ├── (dashboard)/ # Protected routes group
-│ │ │ ├── layout.tsx # Dashboard shell (sidebar, balance)
-│ │ │ ├── page.tsx # Game lobby
-│ │ │ ├── profile/
-│ │ │ ├── history/ # Game history
-│ │ │ └── leaderboard/
-│ │ │
-│ │ ├── games/ # Game routes
+│ │ ├── (authenticated)/ # SESSION GATE — wraps all protected routes
+│ │ │ ├── layout.tsx # Session validation → redirect /login if unauthorized
+│ │ │ │ # Minimal auth gate — NO visual chrome
+│ │ │ │
+│ │ │ ├── (dashboard)/ # Dashboard chrome: TopNav, sidebar, balance
+│ │ │ │ ├── layout.tsx # Visual shell (TopNav, main wrapper)
+│ │ │ │ ├── page.tsx # → "/" — Game lobby
+│ │ │ │ ├── profile/
+│ │ │ │ │ └── page.tsx # User profile
+│ │ │ │ ├── history/ # Game history
+│ │ │ │ │ └── page.tsx # Transaction history
+│ │ │ │ └── leaderboard/
+│ │ │ │ └── page.tsx # Leaderboard
+│ │ │ │
+│ │ │ └── games/ # Game routes — authenticated but NO dashboard chrome
+│ │ │ ├── layout.tsx # (optional) Minimal game chrome or omit
 │ │ │ ├── blackjack/
-│ │ │ │ ├── page.tsx # Blackjack game page (Server Component)
+│ │ │ │ ├── page.tsx # → "/games/blackjack" (Server Component)
 │ │ │ │ └── _components/ # Blackjack-specific UI
 │ │ │ │ ├── BlackjackTable.tsx # Client component
 │ │ │ │ ├── PlayerHand.tsx
 │ │ │ │ └── DealerHand.tsx
 │ │ │ │
 │ │ │ ├── poker/
-│ │ │ │ ├── page.tsx
+│ │ │ │ ├── page.tsx # → "/games/poker"
 │ │ │ │ └── _components/
 │ │ │ │
 │ │ │ ├── slots/
-│ │ │ │ ├── page.tsx
+│ │ │ │ ├── page.tsx # → "/games/slots"
 │ │ │ │ └── _components/
 │ │ │ │
 │ │ │ └── roulette/
-│ │ │ ├── page.tsx
+│ │ │ ├── page.tsx # → "/games/roulette"
 │ │ │ └── _components/
 │ │ │
 │ │ ├── api/ # API routes (if needed beyond Server Actions)
 │ │ │
-│ │ ├── layout.tsx # Root layout (Providers, fonts)
+│ │ ├── layout.tsx # Root layout (fonts, Providers)
 │ │ ├── globals.css
-│ │ └── providers.tsx # Client-side providers (TanStack, Context)
+│ │ └── providers.tsx # Client-side providers (TanStack Query, Context)
 │ │
 │ ├── features/ # Feature modules (business logic)
-│ │ │
-│ │ ├── auth/ # Authentication feature
-│ │ │ ├── actions.ts # Server Actions (login, register)
-│ │ │ ├── queries.ts # TanStack Query hooks
-│ │ │ ├── schemas.ts # Zod schemas
-│ │ │ ├── auth.config.ts # Better Auth config
-│ │ │ └── components/ # Reusable auth UI
 │ │ │
 │ │ ├── user/ # User/balance management
 │ │ │ ├── actions.ts # Server Actions (updateBalance)
@@ -212,6 +214,19 @@ casino-madness-premium/
 └── package.json
 
 ## Key Architectural Decisions
+
+### Authentication Architecture (Session Gate Pattern)
+
+The route structure enforces authentication in layers:
+
+**Three-Tier Route Groups:**
+1. `(auth)/` - Public routes (login, register) - no session required
+2. `(authenticated)/layout.tsx` - **Session gate**: validates session, redirects to /login if unauthorized
+   - This is the single gate for page rendering — no page inside can render unauthenticated. Server Actions independently re-validate the session (defense-in-depth), since actions are network endpoints that don't pass through layouts.
+   - Contains NO visual UI — pure auth logic
+3. `(authenticated)/(dashboard)/` and `(authenticated)/games/` - Protected routes
+   - Dashboard routes get TopNav + sidebar chrome
+   - Game routes get minimal or no chrome (fullscreen game experience)
 
 ### Feature-First Organization
 
